@@ -1,165 +1,83 @@
-import random
-import mymod
+#After 2 weeks in development, I present, the almost perfect tic tac toe AI that's only 83 lines!!!! (formerly more than 120)
 
-def columnCoor(grid):
-	columnList = []
-	for i in range(len(grid)):
-		column = []
-		for j in range(len(grid[i])):
-			column.append(grid[j][i])
-		columnList.append(column)
-	return columnList
+import random #for random picking
 
-def cornerMidCoor(grid):
-	cornerList = []
-	isAdd = True
-	for i in grid:
-		for j in i:
-			if isAdd:
-				cornerList.append(j)
-				isAdd = False
-			else:
-				isAdd = True
-	return cornerList
+def pickThird(grid, counter): #picks the third coordinate for the three in a row
+	for i in ['row', 'column', 'leftDiag', 'rightDiag']: #cycles through all possible three in a row cases
+		thirdCoor = check3Cells(grid, i, counter) #checks to see if there is a 2 in a row
+		if thirdCoor: #if there is a two in a row...
+			return thirdCoor #return the third coordinate
+	return None #if there is no third coordinate, return none
 
-def isDouble(row, column, diagonal, counter):
-	for i in range(len(row)):
-		rowCount = 0
-		for j in range(len(row[i])):
-			if row[i][j] == counter:
-				rowCount+=1
-			elif row[i][j] != 0:
+def check3Cells(grid, type2, counter): #checks to see if there is a three in a row and returns one
+	for i in range(3):  #goes through the rows
+		count = 0 #the count of how many of a counter there is
+		for j in range(3): #goes through the columns
+			if type2 == 'row': # if the type is a row
+				gridType = grid[i][j] #set the type to go through each unit one by one
+				coorPass = [i, j] #set the passed coordinates to be row, column
+			elif type2 == 'column': #if its a column, check by the reverse and return the reverse
+				gridType = grid[j][i]
+				coorPass = [j, i]
+			elif type2 == 'leftDiag': #if its the left diagonal, check it and return it
+				gridType = grid[j][j]
+				coorPass = [j, j]
+			elif type2 == 'rightDiag': #if its the right diagonal, check it and return it
+				gridType = grid[j][2-j]
+				coorPass = [j, 2-j]
+
+			if gridType == counter: #if the cell is equal to the counter piece, add one to the counter count
+				count+=1
+			elif gridType != 0: #if ts equal to another counter piece, there cant be a two in a row
+				count = 0
 				break
-			else:
-				ret = [j, i]
-			if rowCount >= 2:
-				for k in range(len(row[i])):
-					if row[i][k] == 0:
-						return k+1, i+1
+			else: #if there is a zero, then store the value for returning if there is a two in a row
+				ret = coorPass #stores the zero value
+		if count == 2: #if there are two of the same counter in a row...
+			return ret #then return the stored zero value
 
-	for i in range(len(column)):
-		columnCount = 0
-		for j in range(len(column[i])):
-			if column[i][j] == counter:
-				columnCount+=1
-			elif column[i][j] != 0:
-				break
-			if columnCount >= 2:
-				for k in range(len(column[i])):
-					if column[i][k] == 0:
-						return i+1, k+1
+def AIPick(grid): #finally picks what cell to go to and changes the grid cell
+	offensivePick = pickThird(grid, 2) #the offensive pick, if there is one
+	defensivePick = pickThird(grid, 1) #the defensive pick, if there is one
+	if offensivePick: #if there is a pick that will win the game, pick it
+		grid[offensivePick[0]][offensivePick[1]] = 2
+	elif defensivePick: #if there is a pick which will block the opponent, pick it
+		grid[defensivePick[0]][defensivePick[1]] = 2
+	else: #if there is no 2 in a row, then randomly pick
+		randRow = random.randint(0, 2) #a random row pick
+		randColumn = random.randint(0, 2) #a random column pick
+		while grid[randRow][randColumn] != 0: #while the selected cell is not empty, keep picking
+			randRow = random.randint(0, 2)
+			randColumn = random.randint(0, 2)
 
-	diagCount = 0
-	for i in range(len(diagonal)):
-		if diagonal[i] == counter:
-			diagCount += 1
-		elif diagonal[i] != 0:
-			diagCount = None
-			break
-	if diagCount >= 2:
-		if diagonal[2] == 0:
-			return (2, 2)
-		elif diagonal[0] == counter:
-			return (3, 3)
-		elif diagonal[1] == counter:
-			return (1, 3)
-		elif diagonal[3] == counter:
-			return (3, 1)
-		elif diagonal[4] == counter:
-			return (1, 1)
+		grid[randRow][randColumn] = 2 #sets the selected empty grid cell to an x
 
-def winner(row, column, diagonal):
-	for x in [1, 2]:	
-		if x == 1:
-			name = 'Player'
-		else:
-			name = 'Computer'
-		for i in range(len(row)):
-			rowCount = 0
-			for j in range(len(row[i])):
-				if row[i][j] == x:
-					rowCount+=1
-				if rowCount >= 3:
-					return '{} has won!'.format(name)
-		for i in range(len(column)):
-			columnCount = 0
-			for j in range(len(column[i])):
-				if column[i][j] == x:
-					columnCount+=1
-				if columnCount >= 3:
-					return '{} has won!'.format(name)
-		diagCount = 0
-		for i in range(len(diagonal)):
-			if diagonal[i] == x:
-				diagCount += 1
-		if diagCount >= 3 and diagonal[2] == x:
-			if diagonal[0] == x and diagonal[4] == x:
-				return '{} has won!'.format(name)		
-			elif diagonal[1] == x and diagonal[3] == x:
-				return '{} has won!'.format(name)
-
-def emptyCoor(grid):
-	coorList = []
-	for i in range(len(grid)):
-		for j in range(len(grid[i])):
-			if grid[i][j] == 0:
-				coorList.append([j+1, i+1])
-	print 'empty coordinate list: ', coorList
-	return coorList
-
-def AIPick(grid):
-	coor = emptyCoor(grid)
-	xPick = isDouble(grid, columnCoor(grid), cornerMidCoor(grid), 2)
-	yPick = isDouble(grid, columnCoor(grid), cornerMidCoor(grid), 1)
-	if xPick:
-		return xPick
-		#grid[xPick[0]-1][xPick[1]-1] = 2
-	elif yPick:
-		return yPick
-		#grid[yPick[0]-1][yPick[1]-1] = 1
-	finalChoice = random.choice(coor)
-	return finalChoice
-	#grid[finalChoice[0]][finalChoice[1]] = 2
-
-def winner2(grid):
-	pass
-	# return winner status: X, O, cats, draw
-	winner = None
-	for row in grid:
-		first = row[0]
-		if first != 0 and first == row[1] and first == row[2]:
+def isWinner(grid): #returns who won the game, if there is a winner
+	winner = None #winner starts out as none
+	for row in grid: #goes through the rows of the grid
+		first = row[0] #the first element of the row
+		if first != 0 and first == row[1] and first == row[2]: #if the first row element is equal throughout the entire row...
+			winner = first #then the winner is the first element
+	for colIdx in range(3): #goes through the columns
+		first = grid[0][colIdx] #the first element of each column
+		if first != 0 and first == grid[1][colIdx] and first == grid[2][colIdx]: #if the first column element is equal throughout the entire column...
 			winner = first
-	for colIdx in range(3):
-		first = grid[0][colIdx]
-		if first != 0 and first == grid[1][colIdx] and first == grid[2][colIdx]:
-			winner = first
-	# check diagonals
+
 	first = grid[0][0]
-	if first != 0 and first == grid[1][1] and first == grid[2][2]:
+	if first != 0 and first == grid[1][1] and first == grid[2][2]: #goes through the case of a left diagonal
 		winner = first
 	first = grid[2][0]
-	if first != 0 and first == grid[1][1] and first == grid[0][2]:
+	if first != 0 and first == grid[1][1] and first == grid[0][2]: #goes through the case of a right diagonal
 		winner = first
-	if winner:
-		return winner
-	#check cat's game
+	if winner: #if there is a winner...
+		return winner  #return it
 
-def winIfPossible(grid):
-	# return True if moved
-	pass
-
-def blockOpponentWin(grid):
-	# return True if moved
-	pass
-
-def randomMove(grid):
-	# return True if moved
-	pass
-
-def move(grid):
-	if not winIfPossible(grid):
-		if not blockOpponentWin(grid):
-			randomMove(grid)
-
-		
-
+	isFull = True #checks to see if the grid is full for cat's game
+	for row in grid: #goes through the row of the grid
+		for column in row: #goes through the column of the grid
+			if column == 0: #if any cell is empty, then the grid can't be full
+				isFull = False
+	if isFull: #if it is full, the grid must be in a cat's game
+		return 'tie' #return tie
+	else: #if it isn't full and no one has won, then no one has won
+		return False
